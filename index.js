@@ -1,4 +1,3 @@
-console.log(1)
 looker.plugins.visualizations.add({
 	create: function(element, config){
 	},
