@@ -228,7 +228,7 @@ looker.plugins.visualizations.add({
                 returnValues[i] = {};
                 // returnValues[i]['sem_seasonal_pacing.campaign_source'] = source;
                 returnValues[i]['sem_seasonal_pacing.campaign_channel'] = channel;
-                returnValues[i]['sem_seasonal_pacing.campaign_country_code'] = country;
+                returnValues[i]['sem_seasonal_pacing.campaign_country_code'] = country?country:'Not Set';
                 returnValues[i]['metric'] = metrics[i].displayName;
                 returnValues[i]['metric_full'] = metrics[i].name;
                 for(let j in dynamicColumns){
@@ -241,7 +241,6 @@ looker.plugins.visualizations.add({
             rows = rows.concat(returnValues); 
         }  
         //calculate the total and rearrange rows here
-        //brand total- google
         function getSubRows(brand){
             let subRows = rows.filter(x=>x['sem_seasonal_pacing.campaign_channel'].indexOf(brand)>=0);
             let returnSubValues = [];
@@ -274,6 +273,7 @@ looker.plugins.visualizations.add({
                         'sem_seasonal_pacing.campaign_channel': brand + ' all',
                         'metric': metrics[i].displayName,
                         'metric_full': metrics[i].name,
+                        'sem_seasonal_pacing.campaign_country_code': 'Total',
                         'sem_seasonal_pacing.total': total,
                         'sem_seasonal_pacing.total_std_target': total_std_target,
                         'sem_seasonal_pacing.total_target': total_target,
@@ -322,7 +322,7 @@ looker.plugins.visualizations.add({
                 let absNumber = Math.abs(number);
                 let neg = Number(number) < 0 ? '-':'' 
                 if (rowCSS !== 'non_currency') {
-                    neg += '$'
+                    neg += '$';
                 }
                 if( absNumber >= 1000000){
                     return neg + parseFloat(absNumber / 1000000).toFixed(2) + 'M';
