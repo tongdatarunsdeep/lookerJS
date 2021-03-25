@@ -5,7 +5,7 @@ looker.plugins.visualizations.add({
         const defaultValue = 0;
         const metrics = [
             {name:'spend',displayName:'Spend',flagNegative:'neg-green',flagPositive:'pos-red'},
-            {name:'pro_trials',displayName:'Trials',flagNegative:'neg-red',flagPositive:'pos-green',rowCSS:'number_non_currency'},
+            {name:'pro_trials',displayName:'Trials',flagNegative:'neg-red',flagPositive:'pos-green',rowCSS:'non_currency'},
             {name:'cost_per_trial',displayName:'CPT',flagNegative:'neg-green',flagPositive:'pos-red'},
             {name:'estimated_revenue',displayName:'Revenue',flagNegative:'neg-red',flagPositive:'pos-green'},
             {name:'return_on_investment',displayName:'ROI',flagNegative:'neg-red',flagPositive:'pos-green',rowCSS:'number_percentage'},
@@ -31,11 +31,18 @@ looker.plugins.visualizations.add({
             'yahoo all': 'YAHOO SEM ALL',
             'yahoo_sem_unbranded':'YAHOO SEMu',
             'yahoo_sem_branded':'YAHOO SEMb',
+            'undefined':''
         };
         const tableSchema = [        
             {
                 column: 'sem_seasonal_pacing.campaign_channel',
                 columnDisplayName: 'Campaign Channel',
+                classNameCSS: 'dis_fixed',
+                columnSection: 'fixed'
+            },
+            {
+                column: 'sem_seasonal_pacing.campaign_country_code',
+                columnDisplayName: 'Country Code',
                 classNameCSS: 'dis_fixed',
                 columnSection: 'fixed'
             },
@@ -107,7 +114,7 @@ looker.plugins.visualizations.add({
             }
         ];
         //fixed columns: campaign channel, metric and actuals
-        const fixedColumns = 3;
+        const fixedColumns = 4;
         const displayColumns = tableSchema.filter(x=>x.columnSection != 'hide').length;
         
 
@@ -172,7 +179,7 @@ looker.plugins.visualizations.add({
             font-size: 14px;
             font-weight: bold;
         }
-        .number_total,.number_percentage,.number_non_currency{
+        .number_total,.number_percentage,.non_currency{
             text-align: center; 
         }
         `
@@ -215,11 +222,13 @@ looker.plugins.visualizations.add({
             let obj = data[a];      
             // let source = obj[tableSchema[0].column].value;
             let channel = obj[tableSchema[0].column].value;
+            let country = obj[tableSchema[1].column].value;
             let returnValues = [];
             for (let i in metrics){
                 returnValues[i] = {};
                 // returnValues[i]['sem_seasonal_pacing.campaign_source'] = source;
                 returnValues[i]['sem_seasonal_pacing.campaign_channel'] = channel;
+                returnValues[i]['sem_seasonal_pacing.campaign_country_code'] = country;
                 returnValues[i]['metric'] = metrics[i].displayName;
                 returnValues[i]['metric_full'] = metrics[i].name;
                 for(let j in dynamicColumns){
@@ -302,17 +311,17 @@ looker.plugins.visualizations.add({
         // newRows = newRows.concat(getSubRows('yahoo'))
         // newRows = newRows.concat(filterRows("yahoo_sem_unbranded"))
         // newRows = newRows.concat(filterRows("yahoo_sem_branded"))
-        function formatNumber(number,type){
+        function formatNumber(number,type,rowCSS){
             if(typeof number ==='number' && isNaN(number)){
                 number = 0;
             }
             if(type === 'number_percentage'){
                 return parseFloat(number * 100).toFixed(2) + '%';
             }
-            if(type === 'number_total'| type === 'number_non_currency'){
+            if(type === 'number_total'){
                 let absNumber = Math.abs(number);
                 let neg = Number(number) < 0 ? '-':'' 
-                if (type === 'number_total') {
+                if (rowCSS !== 'non_currency') {
                     neg += '$'
                 }
                 if( absNumber >= 1000000){
@@ -334,24 +343,26 @@ looker.plugins.visualizations.add({
                 let field = x.column.replace('_$','');
                 let className = x.classNameCSS;
                 let brand = Object.keys(brandColor).filter( brand => row['sem_seasonal_pacing.campaign_channel'].indexOf(brand) > -1); 
-                if(className.indexOf('number') >= 0 && rowCSS){
+                if(className.indexOf('number') >= 0 && rowCSS && rowCSS.indexOf('number') >= 0){
                     className = rowCSS;
                 }
                 // className += ` ${brand}`;
-                if(index === 0 ){
+                if(index <= 1 ){
                     if(metricIndex === 0){
-
-                    html += `<td rowspan="${metrics.length}" class="main ${brand} ${className}`;
-                    html += `">${channelDisplayDifferentName[row[field]]}</td>`; 
+                        html += `<td rowspan="${metrics.length}" class="main ${brand} ${className}`;
+                        let cell = row[field]?row[field]:'';
+                        if(channelDisplayDifferentName[cell]){
+                            cell = channelDisplayDifferentName[cell];
+                        }
+                        html += `">${cell}</td>`;
                     }                        
                 } else if(index < fixedColumns ){
                     html += `<td class="${className}`;
                     if(index == 1){
                         html  += ` ${brand}`;
                     }
-                    html += `">${formatNumber(row[field],className)}</td>`; 
+                    html += `">${formatNumber(row[field],className,rowCSS)}</td>`; 
                 } else if(index < displayColumns){
-                    metricIndex
                     html += `<td class="${className}`
                     if(Number(row[field]) !== 0 && !isNaN(Number(row[field]))){
                         if( ((x.classNameCSS == 'number_total' && Number(row[field]) < 0)||(x.classNameCSS == 'number_percentage' && Number(row[field]) < 1)) && metrics[metricIndex].flagNegative){
@@ -360,7 +371,7 @@ looker.plugins.visualizations.add({
                             html += ` ${metrics[metricIndex].flagPositive}`;
                         }
                     }
-                    html += `">${formatNumber(row[field],className)}</td>`;                                            
+                    html += `">${formatNumber(row[field],className,rowCSS)}</td>`;                                            
                 }                                
             })
             html += "</tr>";
