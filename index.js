@@ -42,7 +42,7 @@ looker.plugins.visualizations.add({
             },
             {
                 column: 'sem_seasonal_pacing.campaign_country_code',
-                columnDisplayName: 'Country Code',
+                columnDisplayName: 'Country',
                 classNameCSS: 'dis_fixed',
                 columnSection: 'fixed'
             },
