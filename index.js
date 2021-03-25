@@ -2,19 +2,24 @@ looker.plugins.visualizations.add({
 	create: function(element, config){
 	},
 	updateAsync: function(data, element, config, queryResponse, details, doneRendering){
+        const hasCountry = data[0]['sem_seasonal_pacing.campaign_country_code'];
         const defaultValue = 0;
         const metrics = [
-            {name:'spend',displayName:'Spend',flagNegative:'neg-green',flagPositive:'pos-red'},
-            {name:'pro_trials',displayName:'Trials',flagNegative:'neg-red',flagPositive:'pos-green',rowCSS:'non_currency'},
-            {name:'cost_per_trial',displayName:'CPT',flagNegative:'neg-green',flagPositive:'pos-red'},
-            {name:'estimated_revenue',displayName:'Revenue',flagNegative:'neg-red',flagPositive:'pos-green'},
-            {name:'return_on_investment',displayName:'ROI',flagNegative:'neg-red',flagPositive:'pos-green',rowCSS:'number_percentage'},
+            {name:'spend',displayName:'Spend',flagNegative:'neg-green',flagPositive:'pos-red',index:0},
+            {name:'pro_trials',displayName:'Trials',flagNegative:'neg-red',flagPositive:'pos-green',rowCSS:'non_currency',index:1},
+            {name:'cost_per_trial',displayName:'CPT',flagNegative:'neg-green',flagPositive:'pos-red',index:2},
+            {name:'estimated_revenue',displayName:'Revenue',flagNegative:'neg-red',flagPositive:'pos-green',index:3},
+            {name:'return_on_investment',displayName:'ROI',flagNegative:'neg-red',flagPositive:'pos-green',rowCSS:'number_percentage',index:4},
         ];
-        const spendIndex = 0;
-        const trialsIndex =1;
-        const cptIndex = 2;
-        const revenueIndex = 3;
-        const roiIndex = 4;
+        function findRowIndex(rowName){
+            return metrics.find(x=>x.name === rowName).index;
+
+        }
+        const spendIndex = findRowIndex('spend');
+        const trialsIndex =findRowIndex('pro_trials');
+        const cptIndex = findRowIndex('cost_per_trial');
+        const revenueIndex = findRowIndex('estimated_revenue');;
+        const roiIndex = findRowIndex('return_on_investment');;
         const headerDisplayDifferentName = {
             'fixed': ' ',
         };
@@ -37,12 +42,6 @@ looker.plugins.visualizations.add({
             {
                 column: 'sem_seasonal_pacing.campaign_channel',
                 columnDisplayName: 'Campaign Channel',
-                classNameCSS: 'dis_fixed',
-                columnSection: 'fixed'
-            },
-            {
-                column: 'sem_seasonal_pacing.campaign_country_code',
-                columnDisplayName: 'Country',
                 classNameCSS: 'dis_fixed',
                 columnSection: 'fixed'
             },
@@ -113,8 +112,19 @@ looker.plugins.visualizations.add({
                 columnSection: 'hide'
             }
         ];
+        //check if country column is added
+        if(hasCountry){
+            tableSchema.splice(1,0,{
+                column: 'sem_seasonal_pacing.campaign_country_code',
+                columnDisplayName: 'Country',
+                classNameCSS: 'dis_fixed',
+                columnSection: 'fixed'
+            })
+        }
+
+
         //fixed columns: campaign channel, metric and actuals
-        const fixedColumns = 4;
+        const fixedColumns = tableSchema.filter(x=>x.columnSection == 'fixed').length + 1;
         const displayColumns = tableSchema.filter(x=>x.columnSection != 'hide').length;
         
 
@@ -222,7 +232,10 @@ looker.plugins.visualizations.add({
             let obj = data[a];      
             // let source = obj[tableSchema[0].column].value;
             let channel = obj[tableSchema[0].column].value;
-            let country = obj[tableSchema[1].column].value;
+            let country;
+            if(hasCountry){
+                country = obj[tableSchema[1].column].value;
+            }
             let returnValues = [];
             for (let i in metrics){
                 returnValues[i] = {};
@@ -273,7 +286,6 @@ looker.plugins.visualizations.add({
                         'sem_seasonal_pacing.campaign_channel': brand + ' all',
                         'metric': metrics[i].displayName,
                         'metric_full': metrics[i].name,
-                        'sem_seasonal_pacing.campaign_country_code': 'Total',
                         'sem_seasonal_pacing.total': total,
                         'sem_seasonal_pacing.total_std_target': total_std_target,
                         'sem_seasonal_pacing.total_target': total_target,
@@ -285,11 +297,15 @@ looker.plugins.visualizations.add({
                         'sem_seasonal_pacing.pacing_to_eos_target_percentage':total_projected / total_target,
                         'sem_seasonal_pacing.pacing_to_eos_target_absolute':total_projected - total_target
                     };
+                    if(hasCountry){
+                        returnSubValues[i]['sem_seasonal_pacing.campaign_country_code'] ='Total';
+                    } 
                 } else if(i == cptIndex){
                     returnSubValues[i] = returnSubRows (brand,i,spendIndex,trialsIndex)
                 } else if(i == roiIndex ){
                     returnSubValues[i] = returnSubRows (brand,i,revenueIndex,spendIndex)
-                }         
+                } 
+       
             }
             return returnSubValues;
         }
@@ -347,7 +363,7 @@ looker.plugins.visualizations.add({
                     className = rowCSS;
                 }
                 // className += ` ${brand}`;
-                if(index <= 1 ){
+                if(index < fixedColumns - 2 ){
                     if(metricIndex === 0){
                         html += `<td rowspan="${metrics.length}" class="main ${brand} ${className}`;
                         let cell = row[field]?row[field]:'';
