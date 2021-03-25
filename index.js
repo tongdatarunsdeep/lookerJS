@@ -5,7 +5,7 @@ looker.plugins.visualizations.add({
         const defaultValue = 0;
         const metrics = [
             {name:'spend',displayName:'Spend',flagNegative:'neg-green',flagPositive:'pos-red'},
-            {name:'pro_trials',displayName:'Trials',flagNegative:'neg-red',flagPositive:'pos-green'},
+            {name:'pro_trials',displayName:'Trials',flagNegative:'neg-red',flagPositive:'pos-green',rowCSS:'number_non_currency'},
             {name:'cost_per_trial',displayName:'CPT',flagNegative:'neg-green',flagPositive:'pos-red'},
             {name:'estimated_revenue',displayName:'Revenue',flagNegative:'neg-red',flagPositive:'pos-green'},
             {name:'return_on_investment',displayName:'ROI',flagNegative:'neg-red',flagPositive:'pos-green',rowCSS:'number_percentage'},
@@ -172,7 +172,7 @@ looker.plugins.visualizations.add({
             font-size: 14px;
             font-weight: bold;
         }
-        .number_total,.number_percentage{
+        .number_total,.number_percentage,.number_non_currency{
             text-align: center; 
         }
         `
@@ -309,15 +309,18 @@ looker.plugins.visualizations.add({
             if(type === 'number_percentage'){
                 return parseFloat(number * 100).toFixed(2) + '%';
             }
-            if(type === 'number_total'){
+            if(type === 'number_total'| type === 'number_non_currency'){
                 let absNumber = Math.abs(number);
                 let neg = Number(number) < 0 ? '-':'' 
+                if (type === 'number_total') {
+                    neg += '$'
+                }
                 if( absNumber >= 1000000){
-                    return neg + '$'+ parseFloat(absNumber / 1000000).toFixed(2) + 'M';
+                    return neg + parseFloat(absNumber / 1000000).toFixed(2) + 'M';
                 } else if(absNumber >= 1000){
-                    return neg + '$'+ parseFloat(absNumber / 1000).toFixed(2) + 'K';
+                    return neg + parseFloat(absNumber / 1000).toFixed(2) + 'K';
                 } else {
-                    return neg + '$'+ parseFloat(absNumber).toFixed(2)
+                    return neg + parseFloat(absNumber).toFixed(2)
                 }
             }
             return number
