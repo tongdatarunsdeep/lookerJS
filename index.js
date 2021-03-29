@@ -36,7 +36,8 @@ looker.plugins.visualizations.add({
             'yahoo all': 'YAHOO SEM ALL',
             'yahoo_sem_unbranded':'YAHOO SEMu',
             'yahoo_sem_branded':'YAHOO SEMb',
-            'undefined':''
+            'undefined':'',
+            'zznot set':'Not Set'
         };
         const tableSchema = [        
             {
@@ -241,7 +242,7 @@ looker.plugins.visualizations.add({
                 returnValues[i] = {};
                 // returnValues[i]['sem_seasonal_pacing.campaign_source'] = source;
                 returnValues[i]['sem_seasonal_pacing.campaign_channel'] = channel;
-                returnValues[i]['sem_seasonal_pacing.campaign_country_code'] = country?country:'Not Set';
+                returnValues[i]['sem_seasonal_pacing.campaign_country_code'] = country?country:'zznot set';
                 returnValues[i]['metric'] = metrics[i].displayName;
                 returnValues[i]['metric_full'] = metrics[i].name;
                 for(let j in dynamicColumns){
@@ -310,7 +311,10 @@ looker.plugins.visualizations.add({
             return returnSubValues;
         }
         function filterRows(term){
-            return rows.filter( x => x['sem_seasonal_pacing.campaign_channel'] == term)
+            let newRows = rows.filter( x => x['sem_seasonal_pacing.campaign_channel'] == term);
+            return  newRows.sort((a, b)=>{
+                return a['sem_seasonal_pacing.campaign_country_code'].localeCompare(b['sem_seasonal_pacing.campaign_country_code']) 
+            })
         }
         let newRows = getSubRows('')
         newRows = newRows.concat(getSubRows('_unbranded'))
@@ -362,7 +366,6 @@ looker.plugins.visualizations.add({
                 if(className.indexOf('number') >= 0 && rowCSS && rowCSS.indexOf('number') >= 0){
                     className = rowCSS;
                 }
-                // className += ` ${brand}`;
                 if(index < fixedColumns - 2 ){
                     if(metricIndex === 0){
                         html += `<td rowspan="${metrics.length}" class="main ${brand} ${className}`;
