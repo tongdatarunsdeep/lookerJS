@@ -10,6 +10,9 @@ looker.plugins.visualizations.add({
             {name:'cost_per_trial',displayName:'CPT',flagNegative:'neg-green',flagPositive:'pos-red',index:2},
             {name:'estimated_revenue',displayName:'Revenue',flagNegative:'neg-red',flagPositive:'pos-green',index:3},
             {name:'return_on_investment',displayName:'ROI',flagNegative:'neg-red',flagPositive:'pos-green',rowCSS:'number_percentage',index:4},
+            {name:'new_actives',
+            displayName:'New Actives',flagNegative:'neg-red',flagPositive:'pos-green',
+            rowCSS:'non_currency',index:5}
         ];
         function findRowIndex(rowName){
             return metrics.find(x=>x.name === rowName).index;
@@ -18,8 +21,10 @@ looker.plugins.visualizations.add({
         const spendIndex = findRowIndex('spend');
         const trialsIndex =findRowIndex('pro_trials');
         const cptIndex = findRowIndex('cost_per_trial');
-        const revenueIndex = findRowIndex('estimated_revenue');;
-        const roiIndex = findRowIndex('return_on_investment');;
+        const revenueIndex = findRowIndex('estimated_revenue');
+        const roiIndex = findRowIndex('return_on_investment');
+        const newActivesIndex = findRowIndex('new_actives');
+
         const headerDisplayDifferentName = {
             'fixed': ' ',
         };
